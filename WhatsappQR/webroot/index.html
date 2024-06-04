@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Word Game Chat Room</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        #chat {
+            border: 1px solid #ccc;
+            padding: 10px;
+            width: 80%;
+            height: 400px;
+            overflow-y: scroll;
+            margin-bottom: 10px;
+        }
+        #messageInput {
+            width: 75%;
+        }
+    </style>
+</head>
+<body>
+    <h1>Word Game Chat Room</h1>
+    <div id="chat"></div>
+    <input type="text" id="nameInput" placeholder="Enter your name">
+    <button onclick="joinGame()">Join Game</button>
+    <br><br>
+    <input type="text" id="messageInput" placeholder="Type your message" disabled>
+    <button onclick="sendMessage()" disabled>Send</button>
+
+    <script>
+        let websocket;
+        let name;
+
+        function joinGame() {
+            name = document.getElementById('nameInput').value;
+            if (!name) {
+                alert("Please enter your name");
+                return;
+            }
+            document.getElementById('nameInput').disabled = true;
+            document.getElementById('messageInput').disabled = false;
+            document.getElementById('messageInput').focus();
+            document.querySelector("button[onclick='joinGame()']").disabled = true;
+            document.querySelector("button[onclick='sendMessage()']").disabled = false;
+
+            websocket = new WebSocket('ws://localhost:8025/websockets/game');
+            websocket.onmessage = function(event) {
+                const chat = document.getElementById('chat');
+                chat.innerHTML += `<p>${event.data}</p>`;
+                chat.scrollTop = chat.scrollHeight;
+            };
+            websocket.onopen = function() {
+                websocket.send("name:" + name);
+            };
+        }
+
+        function sendMessage() {
+            const messageInput = document.getElementById('messageInput');
+            const message = messageInput.value;
+            if (message && websocket) {
+                websocket.send(message);
+                messageInput.value = '';
+            }
+        }
+    </script>
+</body>
+</html>
